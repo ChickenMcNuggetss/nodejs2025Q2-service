@@ -36,11 +36,12 @@ export class TracksService {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const updatedTrack = this.dbService.updateTrack(id, updateTrackDto);
+    const track = this.dbService.getById('tracks', id);
     if (!track) {
       throw new HttpException("Track doesn't exist", HttpStatus.NOT_FOUND);
     }
-    return track;
+    const updatedTrack = this.dbService.updateTrack(id, updateTrackDto);
+    return updatedTrack;
   }
 
   remove(id: string) {
