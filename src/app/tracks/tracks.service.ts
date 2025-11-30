@@ -40,7 +40,7 @@ export class TracksService {
     if (!track) {
       throw new HttpException("Track doesn't exist", HttpStatus.NOT_FOUND);
     }
-    const updatedTrack = this.dbService.updateTrack(id, updateTrackDto);
+    const updatedTrack = this.dbService.update('tracks', id, updateTrackDto);
     return updatedTrack;
   }
 

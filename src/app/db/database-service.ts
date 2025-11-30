@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Database } from '../interfaces/db';
-import { User } from '../interfaces/user';
-import { Track } from '../interfaces/track';
 
 @Injectable()
 export class DatabaseService {
   private readonly db: Database = {
     users: [],
     tracks: [],
+    artists: [],
+    albums: [],
   } as const;
 
   getAll<T extends keyof Database>(field: T): Database[T] {
@@ -33,17 +33,22 @@ export class DatabaseService {
     return true;
   }
 
-  updateUser(id: string, userInfo: Partial<User>) {
-    const user = this.db.users.find((user) => user.id === id);
-    const index = this.db.users.indexOf(user);
-    this.db.users[index] = {
-      ...user,
-      ...userInfo,
-      version: ++user.version,
-      updatedAt: new Date().valueOf(),
+  update<T extends keyof Database>(
+    field: T,
+    id: string,
+    infoToUpdate: Partial<Database[T][0]>,
+  ) {
+    const entity = this.db[field].find(
+      (entity) => entity.id === id,
+    ) as Database[T][0];
+    // @ts-expect-error We've checked type of new entity already
+    const index = this.db[field].indexOf(entity as Database[T][0]);
+    this.db[field][index] = {
+      ...entity,
+      ...infoToUpdate,
     };
 
-    return { ...this.db.users[index] };
+    return { ...this.db[field][index] } as Database[T][0];
   }
 
   getById<T extends keyof Database>(field: T, id: string) {
@@ -52,14 +57,24 @@ export class DatabaseService {
       | undefined;
   }
 
-  updateTrack(id: string, trackInfo: Partial<Track>) {
-    const track = this.db.tracks.find((track) => track.id === id);
-    const index = this.db.tracks.indexOf(track);
-    this.db.tracks[index] = {
-      ...track,
-      ...trackInfo,
-    };
+  setArtistIdLinkToNull(id: string) {
+    this.db.tracks.map((track) => {
+      if (track.artistId === id) {
+        track.artistId = null;
+      }
+    });
+    this.db.albums.map((album) => {
+      if (album.artistId === id) {
+        album.artistId = null;
+      }
+    });
+  }
 
-    return { ...this.db.tracks[index] };
+  setAlbumIdLinkToNull(id: string) {
+    this.db.tracks.map((track) => {
+      if (track.albumId === id) {
+        track.albumId = null;
+      }
+    });
   }
 }

@@ -50,8 +50,10 @@ export class UsersService {
     if (user.password !== updateUserDto.oldPassword) {
       throw new HttpException('Old password is wrong', HttpStatus.FORBIDDEN);
     }
-    const updatedUser = this.dbService.updateUser(id, {
+    const updatedUser = this.dbService.update('users', id, {
       password: updateUserDto.newPassword,
+      version: ++user.version,
+      updatedAt: new Date().valueOf(),
     });
 
     delete updatedUser.password;
