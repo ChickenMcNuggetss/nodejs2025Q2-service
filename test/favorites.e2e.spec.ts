@@ -162,7 +162,6 @@ describe('Favorites (e2e)', () => {
         .delete(albumsRoutes.delete(albumId))
         .set(commonHeaders);
 
-      console.log(deleteAlbumResponse.body, deleteAlbumResponse.status);
       expect(deleteAlbumResponse.status).toBe(StatusCodes.NO_CONTENT);
 
       const deleteTrackResponse = await unauthorizedRequest
@@ -175,7 +174,6 @@ describe('Favorites (e2e)', () => {
         .get(favoritesRoutes.getAll)
         .set(commonHeaders);
 
-      console.log(responseAfterDeletion.body, responseAfterDeletion.status);
       expect(responseAfterDeletion.status).toBe(StatusCodes.OK);
 
       const artistSearchRes = responseAfterDeletion.body.artists.find(
