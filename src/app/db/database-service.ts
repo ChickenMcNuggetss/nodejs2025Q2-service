@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Database } from '../interfaces/db';
+import {
+  Database,
+  DatabaseArrayFields,
+  DatabaseFavoriteFields,
+} from '../interfaces/db';
 
 @Injectable()
 export class DatabaseService {
@@ -8,20 +12,25 @@ export class DatabaseService {
     tracks: [],
     artists: [],
     albums: [],
+    favorites: {
+      artists: [],
+      albums: [],
+      tracks: [],
+    },
   } as const;
 
-  getAll<T extends keyof Database>(field: T): Database[T] {
+  getAll<T extends DatabaseArrayFields>(field: T): Database[T] {
     return [...this.db[field]] as Database[T];
   }
 
-  create<T extends keyof Database>(field: T, newEntity: Database[T][0]) {
+  create<T extends DatabaseArrayFields>(field: T, newEntity: Database[T][0]) {
     const dbField = this.db[field];
     // @ts-expect-error We've checked type of new entity already
     dbField.push(newEntity);
     return newEntity;
   }
 
-  delete<T extends keyof Database>(field: T, id: string) {
+  delete<T extends DatabaseArrayFields>(field: T, id: string) {
     const entityToDelete = this.db[field].find((entity) => {
       return entity.id === id;
     });
@@ -33,7 +42,7 @@ export class DatabaseService {
     return true;
   }
 
-  update<T extends keyof Database>(
+  update<T extends DatabaseArrayFields>(
     field: T,
     id: string,
     infoToUpdate: Partial<Database[T][0]>,
@@ -51,10 +60,44 @@ export class DatabaseService {
     return { ...this.db[field][index] } as Database[T][0];
   }
 
-  getById<T extends keyof Database>(field: T, id: string) {
+  getById<T extends DatabaseArrayFields>(field: T, id: string) {
     return this.db[field].find((entity) => entity.id === id) as
       | Database[T][0]
       | undefined;
+  }
+
+  getFavorites() {
+    return { ...this.db.favorites };
+  }
+
+  getInFavoritesById<T extends DatabaseFavoriteFields>(field: T, id: string) {
+    return this.db.favorites[field].find((entity) => entity.id === id) as
+      | Database['favorites'][T][0]
+      | undefined;
+  }
+
+  addFavoritesField<T extends DatabaseFavoriteFields>(
+    field: T,
+    entity: Database['favorites'][T][0],
+  ) {
+    // @ts-expect-error We've checked type of new entity already
+    this.db.favorites[field].push(entity as Database['favorites'][T][0]);
+  }
+
+  removeFromFavorites<T extends DatabaseFavoriteFields>(field: T, id: string) {
+    const entityToDelete = this.db.favorites[field].find(
+      (entity) => entity.id === id,
+    );
+    if (!entityToDelete) {
+      return false;
+    }
+    this.db.favorites[field].splice(
+      // @ts-expect-error We've checked type of new entity already
+      this.db.favorites[field].indexOf(entityToDelete),
+      1,
+    );
+
+    return true;
   }
 
   setArtistIdLinkToNull(id: string) {

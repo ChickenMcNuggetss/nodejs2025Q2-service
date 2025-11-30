@@ -8,4 +8,13 @@ export interface Database {
   tracks: Track[];
   artists: Artist[];
   albums: Album[];
+  favorites: {
+    artists: Artist[];
+    albums: Album[];
+    tracks: Track[];
+  };
 }
+
+export type DatabaseArrayFields = Exclude<keyof Database, 'favorites'>;
+
+export type DatabaseFavoriteFields = keyof Database['favorites'];

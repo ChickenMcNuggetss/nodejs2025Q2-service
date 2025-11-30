@@ -52,5 +52,6 @@ export class TracksService {
     if (!isTrackExist) {
       throw new HttpException("Track doesn't exist", HttpStatus.NOT_FOUND);
     }
+    this.dbService.removeFromFavorites('tracks', id);
   }
 }

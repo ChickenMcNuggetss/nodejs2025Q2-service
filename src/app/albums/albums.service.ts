@@ -52,6 +52,7 @@ export class AlbumsService {
     if (!isArtistExist) {
       throw new HttpException("Artist doesn't exist", HttpStatus.NOT_FOUND);
     }
+    this.dbService.removeFromFavorites('albums', id);
     this.dbService.setAlbumIdLinkToNull(id);
   }
 }

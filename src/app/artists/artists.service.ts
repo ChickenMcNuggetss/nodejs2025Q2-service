@@ -52,7 +52,7 @@ export class ArtistsService {
     if (!isArtistExist) {
       throw new HttpException("Artist doesn't exist", HttpStatus.NOT_FOUND);
     }
-    console.log(id, 'Id');
     this.dbService.setArtistIdLinkToNull(id);
+    this.dbService.removeFromFavorites('artists', id);
   }
 }
