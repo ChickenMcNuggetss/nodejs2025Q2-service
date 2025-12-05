@@ -1,58 +1,57 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
-import { DatabaseService } from '../db/database-service';
-import { v4 as uuidv4 } from 'uuid';
 import { isUUID } from 'class-validator';
+import { Artist } from './artist.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class ArtistsService {
-  constructor(private dbService: DatabaseService) {}
+  constructor(
+    @InjectRepository(Artist)
+    private artistsRepository: Repository<Artist>,
+  ) {}
 
-  create(createArtistDto: CreateArtistDto) {
-    const newArtist = {
-      id: uuidv4(),
-      ...createArtistDto,
-    };
-    return this.dbService.create('artists', newArtist);
+  async create(createArtistDto: CreateArtistDto) {
+    const artist = this.artistsRepository.create(createArtistDto);
+    return await this.artistsRepository.save(artist);
   }
 
-  findAll() {
-    return this.dbService.getAll('artists');
+  async findAll() {
+    return await this.artistsRepository.find();
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     if (!isUUID(id, 4)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const artist = this.dbService.getById('artists', id);
+    const artist = await this.artistsRepository.findOneBy({ id });
     if (!artist) {
       throw new HttpException("Artist doesn't exist", HttpStatus.NOT_FOUND);
     }
     return artist;
   }
 
-  update(id: string, updateArtistDto: UpdateArtistDto) {
+  async update(id: string, updateArtistDto: UpdateArtistDto) {
     if (!isUUID(id, 4)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const artist = this.dbService.getById('artists', id);
+    const artist = await this.artistsRepository.findOneBy({ id });
     if (!artist) {
       throw new HttpException("Artist doesn't exist", HttpStatus.NOT_FOUND);
     }
-    const updatedArtist = this.dbService.update('artists', id, updateArtistDto);
-    return updatedArtist;
+    return await this.artistsRepository.update({ id }, updateArtistDto);
   }
 
-  remove(id: string) {
+  async remove(id: string) {
     if (!isUUID(id, 4)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const isArtistExist = this.dbService.delete('artists', id);
-    if (!isArtistExist) {
+    const artist = await this.artistsRepository.findOneBy({ id });
+    if (!artist) {
       throw new HttpException("Artist doesn't exist", HttpStatus.NOT_FOUND);
     }
-    this.dbService.setArtistIdLinkToNull(id);
-    this.dbService.removeFromFavorites('artists', id);
+    return await this.artistsRepository.delete({ id });
   }
 }
