@@ -1,72 +1,68 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { DatabaseService } from '../db/database-service';
 import { isUUID } from 'class-validator';
-import { v4 as uuidv4 } from 'uuid';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './users.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  constructor(private dbService: DatabaseService) {}
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
 
-  create(createUserDto: CreateUserDto) {
-    const date = new Date().valueOf();
-    const newUser = {
-      id: uuidv4(),
-      login: createUserDto.login,
-      password: createUserDto.password,
-      version: 1,
-      createdAt: date,
-      updatedAt: date,
-    };
-    const newDbUser = { ...this.dbService.create('users', newUser) };
-    delete newDbUser.password;
-    return newDbUser;
+  async create(createUserDto: CreateUserDto) {
+    const user = this.usersRepository.create(createUserDto);
+    const newUser = await this.usersRepository.save(user);
+    delete newUser.password;
+    return newUser;
   }
 
-  findAll() {
-    return this.dbService.getAll('users');
+  async findAll() {
+    return await this.usersRepository.find();
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const user = this.dbService.getById('users', id);
+    const user = await this.usersRepository.findOneBy({ id });
     if (!user) {
       throw new HttpException("User doesn't exist", HttpStatus.NOT_FOUND);
     }
     return user;
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const user = this.dbService.getById('users', id);
+    const user = await this.usersRepository.findOneBy({ id });
     if (!user) {
       throw new HttpException("User doesn't exist", HttpStatus.NOT_FOUND);
     }
     if (user.password !== updateUserDto.oldPassword) {
       throw new HttpException('Old password is wrong', HttpStatus.FORBIDDEN);
     }
-    const updatedUser = this.dbService.update('users', id, {
-      password: updateUserDto.newPassword,
-      version: ++user.version,
-      updatedAt: new Date().valueOf(),
-    });
-
-    delete updatedUser.password;
+    const updatedUser = await this.usersRepository.update(
+      { id },
+      {
+        password: updateUserDto.newPassword,
+      },
+    );
     return updatedUser;
   }
 
-  remove(id: string) {
+  async remove(id: string) {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const isUserDeleted = this.dbService.delete('users', id);
-    if (!isUserDeleted) {
+    const user = await this.usersRepository.findOneBy({ id });
+    if (!user) {
       throw new HttpException("Record doesn't exist", HttpStatus.NOT_FOUND);
     }
+    await this.usersRepository.delete({ id });
   }
 }
