@@ -1,57 +1,61 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
-import { DatabaseService } from '../db/database-service';
-import { v4 as uuidv4 } from 'uuid';
 import { isUUID } from 'class-validator';
+import { Track } from './track.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class TracksService {
-  constructor(private dbService: DatabaseService) {}
+  constructor(
+    @InjectRepository(Track)
+    private tracksRepository: Repository<Track>,
+  ) {}
 
-  create(createTrackDto: CreateTrackDto) {
-    const newTrack = {
-      id: uuidv4(),
-      ...createTrackDto,
-    };
-    return this.dbService.create('tracks', newTrack);
+  async create(createTrackDto: CreateTrackDto) {
+    const track = this.tracksRepository.create(createTrackDto);
+    return await this.tracksRepository.save(track);
   }
 
-  findAll() {
-    return this.dbService.getAll('tracks');
+  async findAll() {
+    return await this.tracksRepository.find();
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const track = this.dbService.getById('tracks', id);
+    const track = await this.tracksRepository.findOneBy({ id });
     if (!track) {
       throw new HttpException("Track doesn't exist", HttpStatus.NOT_FOUND);
     }
     return track;
   }
 
-  update(id: string, updateTrackDto: UpdateTrackDto) {
+  async update(id: string, updateTrackDto: UpdateTrackDto) {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const track = this.dbService.getById('tracks', id);
+    const track = await this.tracksRepository.findOneBy({ id });
     if (!track) {
       throw new HttpException("Track doesn't exist", HttpStatus.NOT_FOUND);
     }
-    const updatedTrack = this.dbService.update('tracks', id, updateTrackDto);
+    const updatedTrack = await this.tracksRepository.update(
+      { id },
+      updateTrackDto,
+    );
     return updatedTrack;
   }
 
-  remove(id: string) {
+  async remove(id: string) {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const isTrackExist = this.dbService.delete('tracks', id);
-    if (!isTrackExist) {
+    const track = await this.tracksRepository.findOneBy({ id });
+    if (!track) {
       throw new HttpException("Track doesn't exist", HttpStatus.NOT_FOUND);
     }
-    this.dbService.removeFromFavorites('tracks', id);
+    return await this.tracksRepository.delete({ id });
   }
 }
