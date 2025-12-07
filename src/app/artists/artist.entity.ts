@@ -1,6 +1,13 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Track } from '../tracks/track.entity';
 import { Album } from '../albums/album.entity';
+import { Favorite } from '../favorites/favorite.entity';
 
 @Entity()
 export class Artist {
@@ -16,4 +23,7 @@ export class Artist {
 
   @OneToMany(() => Track, (track) => track.artist)
   tracks: Track[];
+
+  @ManyToMany(() => Favorite, (favorite) => favorite.artists)
+  favorites: Favorite[];
 }

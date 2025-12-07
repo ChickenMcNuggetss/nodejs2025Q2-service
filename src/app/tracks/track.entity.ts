@@ -2,11 +2,13 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Artist } from '../artists/artist.entity';
 import { Album } from '../albums/album.entity';
+import { Favorite } from '../favorites/favorite.entity';
 
 @Entity()
 export class Track {
@@ -36,4 +38,7 @@ export class Track {
 
   @Column({ nullable: true })
   albumId: string | null;
+
+  @ManyToMany(() => Favorite, (favorite) => favorite.tracks)
+  favorites: Favorite[];
 }

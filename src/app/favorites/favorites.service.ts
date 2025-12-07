@@ -1,37 +1,115 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common';
 import { DatabaseService } from '../db/database-service';
 import { DatabaseFavoriteFields } from '../interfaces/db';
 import { isUUID } from 'class-validator';
+import { Favorite } from './favorite.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Artist } from '../artists/artist.entity';
+import { Track } from '../tracks/track.entity';
+import { Album } from '../albums/album.entity';
 
 @Injectable()
-export class FavoritesService {
-  constructor(private dbService: DatabaseService) {}
+export class FavoritesService implements OnModuleInit {
+  private repoMap: Record<DatabaseFavoriteFields, Repository<any>> = {
+    albums: this.albumsRepository,
+    artists: this.artistsRepository,
+    tracks: this.tracksRepository,
+  };
+  constructor(
+    @InjectRepository(Favorite)
+    private favoritesRepository: Repository<Favorite>,
+    @InjectRepository(Artist)
+    private artistsRepository: Repository<Artist>,
+    @InjectRepository(Track)
+    private tracksRepository: Repository<Track>,
+    @InjectRepository(Album)
+    private albumsRepository: Repository<Album>,
+    private dbService: DatabaseService,
+  ) {}
 
-  findAll() {
-    return this.dbService.getFavorites();
+  async onModuleInit() {
+    const count = await this.favoritesRepository.count();
+    if (count === 0) {
+      await this.createFavorites();
+    }
   }
 
-  addToFavorites(id: string, field: DatabaseFavoriteFields) {
+  async findAll() {
+    const favorite = await this.favoritesRepository.find({
+      relations: ['artists', 'albums', 'tracks'],
+    });
+    return favorite[0];
+  }
+
+  async addToFavorites(id: string, field: DatabaseFavoriteFields) {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const entityToAdd = this.dbService.getById(field, id);
-    if (!entityToAdd) {
+
+    const entity = await this.repoMap[field].findOneBy({ id });
+
+    if (!entity) {
       throw new HttpException(
         "Entity doesn't exist",
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
-    this.dbService.addFavoritesField(field, { ...entityToAdd });
+    const favorite = await this.findAll();
+    const alreadyExists = favorite[field]?.some((entity) => entity.id === id);
+    if (alreadyExists) {
+      throw new HttpException(
+        'Entity already exist',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    favorite[field] = [...favorite[field], entity];
+    return await this.favoritesRepository.save(favorite);
   }
 
-  removeFromFavorites(id: string, field: DatabaseFavoriteFields) {
+  async createFavorites() {
+    const favorites = this.favoritesRepository.create({
+      artists: [],
+      albums: [],
+      tracks: [],
+    });
+    return await this.favoritesRepository.save(favorites);
+  }
+
+  async removeFromFavorites(id: string, field: DatabaseFavoriteFields) {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
     }
-    const isEntityDeleted = this.dbService.removeFromFavorites(field, id);
-    if (!isEntityDeleted) {
-      throw new HttpException("Entity doesn't favorite", HttpStatus.NOT_FOUND);
+    const entity = await this.repoMap[field].findOneBy({ id });
+
+    if (!entity) {
+      throw new HttpException(
+        "Entity doesn't exist",
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
+    const favorite = await this.favoritesRepository.findOne({
+      relations: ['artists', 'albums', 'tracks'],
+      where: {
+        [field]: {
+          id,
+        },
+      },
+    });
+    const entityIndex = favorite[field].findIndex((entity) => entity.id === id);
+    if (entityIndex === -1) {
+      throw new HttpException(
+        "Entity doesn't exist",
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    favorite[field].splice(entityIndex, 1);
+    return await this.favoritesRepository.save(favorite);
   }
 }
