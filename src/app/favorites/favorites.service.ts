@@ -2,9 +2,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
-  OnModuleInit,
 } from '@nestjs/common';
-import { DatabaseService } from '../db/database-service';
 import { DatabaseFavoriteFields } from '../interfaces/db';
 import { isUUID } from 'class-validator';
 import { Favorite } from './favorite.entity';
@@ -15,7 +13,7 @@ import { Track } from '../tracks/track.entity';
 import { Album } from '../albums/album.entity';
 
 @Injectable()
-export class FavoritesService implements OnModuleInit {
+export class FavoritesService {
   private repoMap: Record<DatabaseFavoriteFields, Repository<any>> = {
     albums: this.albumsRepository,
     artists: this.artistsRepository,
@@ -30,20 +28,19 @@ export class FavoritesService implements OnModuleInit {
     private tracksRepository: Repository<Track>,
     @InjectRepository(Album)
     private albumsRepository: Repository<Album>,
-    private dbService: DatabaseService,
   ) {}
-
-  async onModuleInit() {
-    const count = await this.favoritesRepository.count();
-    if (count === 0) {
-      await this.createFavorites();
-    }
-  }
 
   async findAll() {
     const favorite = await this.favoritesRepository.find({
       relations: ['artists', 'albums', 'tracks'],
     });
+    if (!favorite?.length) {
+      return {
+        artists: [],
+        albums: [],
+        tracks: [],
+      };
+    }
     return favorite[0];
   }
 
