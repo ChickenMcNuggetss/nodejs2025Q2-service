@@ -17,6 +17,15 @@ git clone {repository URL}
 npm install
 ```
 
+## Docker
+
+Run docker:
+
+```
+docker-compose build
+docker-compose up -d
+```
+
 ## Running application
 
 ```
