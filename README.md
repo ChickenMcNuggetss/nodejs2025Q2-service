@@ -19,12 +19,18 @@ npm install
 
 ## Docker
 
-Run docker:
+Run with docker-compose:
 
 ```
-docker-compose build
-docker-compose up -d
+docker-compose up --build
 ```
+
+Images links:
+
+[chickenmcnuggetss/nodejs2025q2-service](https://hub.docker.com/r/chickenmcnuggetss/nodejs2025q2-service)
+[chickenmcnuggetss/nodejs2025q2-service-postgres](https://hub.docker.com/r/chickenmcnuggetss/nodejs2025q2-service-postgres)
+
+
 
 ## Running application
 
