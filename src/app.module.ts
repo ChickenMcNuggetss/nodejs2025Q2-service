@@ -8,9 +8,10 @@ import { AlbumsModule } from './app/albums/albums.module';
 import { FavoritesModule } from './app/favorites/favorites.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { LoggerMiddleware } from './app/logger/logger.middleware';
+import { LoggerMiddleware } from './app/logging/logger.middleware';
 import cors from 'cors';
 import helmet from 'helmet';
+import { LoggerModule } from 'pino-nestjs';
 
 @Module({
   imports: [
@@ -34,15 +35,18 @@ import helmet from 'helmet';
       autoLoadEntities: true,
       synchronize: false,
     }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        customProps: (req, res) => ({
+          context: 'HTTP',
+        }),
+        transport: {
+          target: 'pino-pretty',
+        },
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(cors(), helmet(), LoggerMiddleware)
-      .forRoutes('');
-  }
-}
-
+export class AppModule {}
