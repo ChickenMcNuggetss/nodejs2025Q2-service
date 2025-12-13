@@ -9,14 +9,17 @@ import {
   WriteStream,
 } from 'fs';
 import * as path from 'path';
+import { getLogLevels } from 'src/app/utils/getLogLevels';
 
 @Injectable()
 export class LogFileService {
   private readonly logStream: WriteStream;
   private readonly errorStream: WriteStream;
   private readonly maxSize: number;
+  private logLevels: string[];
 
   constructor() {
+    this.logLevels = getLogLevels(Number(process.env.LOG_LEVEL));
     const dir = process.env.LOG_DIR ?? 'logs';
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
@@ -34,6 +37,9 @@ export class LogFileService {
   }
 
   public write(message: string, logLevel: LogLevel) {
+    if (!this.logLevels.some((level) => level.includes(logLevel))) {
+      return;
+    }
     const definedPath = this.defineFilePath(logLevel);
     try {
       if (logLevel === 'error') {
