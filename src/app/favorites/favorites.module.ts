@@ -6,9 +6,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Artist } from '../artists/artist.entity';
 import { Album } from '../albums/album.entity';
 import { Track } from '../tracks/track.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
+    JwtModule,
     TypeOrmModule.forFeature([Favorite, Track, Artist, Album]),
   ],
   controllers: [FavoritesController],

@@ -3,9 +3,10 @@ import { ArtistsService } from './artists.service';
 import { ArtistsController } from './artists.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Artist } from './artist.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Artist])],
+  imports: [JwtModule, TypeOrmModule.forFeature([Artist])],
   controllers: [ArtistsController],
   providers: [ArtistsService],
 })
