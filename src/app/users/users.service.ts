@@ -35,6 +35,14 @@ export class UsersService {
     return user;
   }
 
+  async findOneByLogin(login: string) {
+    const user = await this.usersRepository.findOneBy({ login });
+    if (!user) {
+      throw new HttpException("User doesn't exist", HttpStatus.NOT_FOUND);
+    }
+    return user;
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     if (!isUUID(id)) {
       throw new HttpException('Invalid id', HttpStatus.BAD_REQUEST);
