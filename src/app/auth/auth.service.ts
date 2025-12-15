@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/users.entity';
 
@@ -19,34 +19,15 @@ export class AuthService {
   ) {}
 
   public async signup(createUserDto: CreateUserDto) {
-    const userExist = !!(await this.usersService.findOneByLogin(
-      createUserDto.login,
-    ));
-    if (userExist) {
-      throw new HttpException('User already exists', HttpStatus.CONFLICT);
-    }
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const user = await this.usersService.create({
-      ...createUserDto,
-      password: hashedPassword,
-    });
-
-    const payload = {
-      sub: user.id,
-      login: user.login,
+    const user = {
+      ...(await this.usersService.create({
+        ...createUserDto,
+        password: hashedPassword,
+      })),
     };
-
-    const accessToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_SECRET,
-      expiresIn: Number(process.env.JWT_EXPIRESIN) || 900,
-    });
-
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: Number(process.env.JWT_REFRESH_EXPIRESIN) ?? 86400,
-    });
-
-    return { accessToken, refreshToken };
+    delete user.password;
+    return { ...user };
   }
 
   public async login(createUserDto: CreateUserDto) {
@@ -55,7 +36,7 @@ export class AuthService {
       createUserDto.password,
     );
     if (!user.status) {
-      throw new HttpException(user.message, HttpStatus.UNAUTHORIZED);
+      throw new HttpException(user.message, HttpStatus.FORBIDDEN);
     }
     const payload = {
       sub: user.payload.id,
@@ -65,7 +46,12 @@ export class AuthService {
       secret: process.env.JWT_SECRET,
       expiresIn: Number(process.env.JWT_EXPIRESIN) || 900,
     });
-    return { accessToken };
+
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: Number(process.env.JWT_REFRESH_EXPIRESIN) || 86400,
+    });
+    return { accessToken, refreshToken };
   }
 
   public async refresh(refreshToken: string) {
@@ -82,7 +68,12 @@ export class AuthService {
       expiresIn: Number(process.env.JWT_EXPIRESIN) || 900,
     });
 
-    return { accessToken };
+    const newRefreshToken = await this.jwtService.signAsync(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: Number(process.env.JWT_REFRESH_EXPIRESIN) || 86400,
+    });
+
+    return { accessToken, newRefreshToken };
   }
 
   async validateUser(

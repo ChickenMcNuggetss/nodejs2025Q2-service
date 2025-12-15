@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { LogFileService } from './log-file/log-file.service';
-import { LogLevel } from '../enums/log-levels';
+import { LogFileService } from './services/log-file.service';
+import { LogLevel } from '../core/enums/log-levels';
 
 @Injectable()
 export class LoggingService {

@@ -2,7 +2,7 @@ import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 import { LoggerErrorInterceptor } from 'pino-nestjs';
-import { CatchEverythingFilter } from './app/filters/exception.filter';
+import { CatchEverythingFilter } from './app/core/filters/exception.filter';
 import { LoggingService } from './app/logging/logging.service';
 
 async function bootstrap() {

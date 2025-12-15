@@ -1,4 +1,4 @@
-import { LogLevel } from '../enums/log-levels';
+import { LogLevel } from '../core/enums/log-levels';
 
 export function getLogLevels(levelsCount: number) {
   if (isNaN(levelsCount)) {

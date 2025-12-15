@@ -12,7 +12,7 @@ import {
 import { AlbumsService } from './albums.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
-import { AuthGuard } from '../guards/auth/auth.guard';
+import { AuthGuard } from '../core/guards/auth.guard';
 
 @UseGuards(AuthGuard)
 @Controller('album')

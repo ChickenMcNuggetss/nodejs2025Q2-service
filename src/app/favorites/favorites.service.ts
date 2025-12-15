@@ -3,7 +3,7 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
-import { DatabaseFavoriteFields } from '../interfaces/db';
+import { DatabaseFavoriteFields } from '../core/interfaces/db';
 import { isUUID } from 'class-validator';
 import { Favorite } from './favorite.entity';
 import { Repository } from 'typeorm';

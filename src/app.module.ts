@@ -8,8 +8,9 @@ import { AlbumsModule } from './app/albums/albums.module';
 import { FavoritesModule } from './app/favorites/favorites.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { LoggerMiddleware } from './app/logging/logger/logger.middleware';
+import { LoggerMiddleware } from './app/logging/middlewares/logger.middleware';
 import { LoggingModule } from './app/logging/logging.module';
+import { AuthModule } from './app/auth/auth.module';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { LoggingModule } from './app/logging/logging.module';
       autoLoadEntities: true,
       synchronize: false,
     }),
-    LoggingModule
+    LoggingModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService, LoggerMiddleware],

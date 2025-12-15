@@ -12,7 +12,7 @@ import {
 import { ArtistsService } from './artists.service';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
-import { AuthGuard } from '../guards/auth/auth.guard';
+import { AuthGuard } from '../core/guards/auth.guard';
 
 @UseGuards(AuthGuard)
 @Controller('artist')
